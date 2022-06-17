@@ -1,9 +1,10 @@
 const dotenv = require('dotenv');
 const dnsimple = require('../api/api');
 
-dotenv.config()
+dotenv.config();
 
-var accountId = process.env.ACCOUNT_ID;
+let accountId = process.env.ACCOUNT_ID;
+let contactId = process.env.CONTACT_ID;
 
 const domainController = {
   whoami: (req, res) => {
@@ -28,7 +29,9 @@ const domainController = {
   },
 
   getDomain: (req, res) => {
-    dnsimple.domains.getDomain(accountId, 'isiagi.com').then(
+    const { domain } = req.body;
+
+    dnsimple.domains.getDomain(accountId, domain).then(
       (response) => {
         console.log(response.data);
       },
@@ -38,7 +41,7 @@ const domainController = {
     );
   },
 
-  registerDomain: (req, res) => {
+  registerContact: (req, res) => {
     const contact = {
       email: 'isiagigeofrey0@gmail.com',
       first_name: 'Geofrey',
@@ -54,6 +57,33 @@ const domainController = {
     dnsimple.contacts
       .createContact(accountId, contact)
       .then((response) => console.log(response.data));
+  },
+
+  getContact: async (req, res) => {
+    let response = await dnsimple.contacts.listContacts(accountId);
+    console.log(response.data);
+  },
+
+  registerDomain: async (req, res) => {
+    const { domain } = req.body;
+
+    const attributes = {
+      registrant_id: contactId,
+      whois_privacy: true,
+      auto_renew: true,
+    };
+
+    try {
+      let response = await dnsimple.registrar.registerDomain(
+        accountId,
+        domain,
+        attributes,
+      );
+
+      res.status(200).json({ message: response.data });
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
   },
 
   createDomain: (req, res) => {
